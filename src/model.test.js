@@ -1,4 +1,4 @@
-const { Profile, Contract } = require('./model');
+const { Profile, Contract, Job } = require('./model');
 
 async function reSeedDatabase() {
     return require('../scripts/seedDb');
@@ -23,8 +23,6 @@ describe('Contract model', () => {
         });
         expect(contract).toHaveProperty('createdAt');
         expect(contract).toHaveProperty('updatedAt');
-        expect(contract.createdAt instanceof Date).toBe(true);
-        expect(contract.updatedAt instanceof Date).toBe(true);
     });
 
     it('should get contract for the contractor profile which owns it', async () => {
@@ -39,8 +37,6 @@ describe('Contract model', () => {
         });
         expect(contract).toHaveProperty('createdAt');
         expect(contract).toHaveProperty('updatedAt');
-        expect(typeof contract.createdAt instanceof Date).toBe(true);
-        expect(typeof contract.updatedAt instanceof Date).toBe(true);
     });
 
     it('should not get contract for a profile which does not own it', async () => {
@@ -65,6 +61,24 @@ describe('Contract model', () => {
         for (const contract of contracts) {
             expect(contract).toBeTruthy();
             expect(contract.status).not.toEqual('terminated');
+        }
+    });
+});
+
+describe('Job model', () => {
+    let profile;
+    beforeEach(async () => {
+        await reSeedDatabase();
+        profile = await Profile.findOne({ where: { id: 1 } });
+    });
+
+    it('should get all unpaid jobs for active contracts given the profile', async () => {
+        const jobs = await Job.findAllUnpaidJobsForProfile(profile);
+
+        expect(jobs.length).toEqual(1);
+        for (const job of jobs) {
+            expect(job).toBeTruthy();
+            expect(job.paid).not.toEqual(true);
         }
     });
 });
