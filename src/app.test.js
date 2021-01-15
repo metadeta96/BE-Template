@@ -1,7 +1,15 @@
 const request = require('supertest');
 const app = require('./app');
 
+async function reSeedDatabase() {
+    return require('../scripts/seedDb');
+}
+
 describe('Contract endpoints', () => {
+    beforeAll(async () => {
+        await reSeedDatabase();
+    });
+
     it('should get contract for the client profile which owns it', async () => {
         const contractId = 1;
         const profileId = 1;
