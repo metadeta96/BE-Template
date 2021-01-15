@@ -55,14 +55,13 @@ class Contract extends Sequelize.Model {
    * Build the where query for find methods using the profile
    * If the type of the profile is neither Client nor Contractor it will return undefined
    * 
-   * @private
    * @static
    * @async
    * @param {Profile} profile the profile which owns the contract
    * @param {Object} query optional filters to the final query
    * @returns {Object} the built query or undefined in case of error
    */
-  static #buildQueryForProfile(profile, query) {
+  static buildQueryForProfile(profile, query) {
     let key;
     if (profile?.type === Profile.Type.Client) {
       // Filter by ClientId
@@ -92,7 +91,7 @@ class Contract extends Sequelize.Model {
    * @returns {Promise<Contract>} the contract or undefined
    */
   static async findByIdForProfile(profile, id) {
-    const query = Contract.#buildQueryForProfile(profile, { id });
+    const query = Contract.buildQueryForProfile(profile, { id });
     if (!query) {
       return undefined;
     }
@@ -111,7 +110,7 @@ class Contract extends Sequelize.Model {
    * @returns {Promise<Array<Contract>>} the queried contracts
    */
   static async findAllForProfile(profile, query) {
-    query = Contract.#buildQueryForProfile(profile, query);
+    query = Contract.buildQueryForProfile(profile, query);
     if (!query) {
       return [];
     }
@@ -151,7 +150,33 @@ Contract.init(
   }
 );
 
-class Job extends Sequelize.Model { }
+class Job extends Sequelize.Model {
+  /**
+   * Find all unpaid jobs for the given profile
+   * Only return jobs belonging to active contracts owned by the profile.
+   * 
+   * @static
+   * @async
+   * @param {Profile} profile the profile which owns the contract. Either Client or Contractor
+   * @returns {Promise<Array<Job>>} the unpaid jobs
+   */
+  static async findAllUnpaidJobsForProfile(profile) {
+    const contractQuery = Contract.buildQueryForProfile(profile, { status: Contract.Status.InProgress });
+    if (!contractQuery) {
+      return [];
+    }
+    return Job.findAll({
+      include: [{
+        model: Contract,
+        where: contractQuery,
+        required: true,
+      }],
+      attributes: { exclude: ['Contract'] },
+      where: { paid: { [Sequelize.Op.not]: true } },
+    });
+  }
+
+}
 Job.init(
   {
     description: {
