@@ -62,4 +62,17 @@ describe('Contract endpoints', () => {
             .set('profile_id', profileId);
         expect(res.statusCode).toEqual(404);
     });
+
+    it('should get all non terminated contracts for the calling profile', async () => {
+        const profileId = 4;
+        const res = await request(app)
+            .get('/contracts')
+            .set('profile_id', profileId);
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.length).toEqual(3);
+        for (const contract of res.body) {
+            expect(contract).toBeTruthy();
+            expect(contract.status).not.toEqual('terminated');
+        }
+    });
 });
