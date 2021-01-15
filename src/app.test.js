@@ -28,8 +28,8 @@ describe('Contract endpoints', () => {
         });
         expect(res.body).toHaveProperty('createdAt');
         expect(res.body).toHaveProperty('updatedAt');
-        expect(typeof res.body.createdAt === 'string').toBeTruthy();
-        expect(typeof res.body.updatedAt === 'string').toBeTruthy();
+        expect(typeof res.body.createdAt === 'string').toBe(true);
+        expect(typeof res.body.updatedAt === 'string').toBe(true);
     });
 
     it('should get contract for the contractor profile which owns it', async () => {
@@ -50,8 +50,8 @@ describe('Contract endpoints', () => {
         });
         expect(res.body).toHaveProperty('createdAt');
         expect(res.body).toHaveProperty('updatedAt');
-        expect(typeof res.body.createdAt === 'string').toBeTruthy();
-        expect(typeof res.body.updatedAt === 'string').toBeTruthy();
+        expect(typeof res.body.createdAt === 'string').toBe(true);
+        expect(typeof res.body.updatedAt === 'string').toBe(true);
     });
 
     it('should not get contract for a profile which does not own it', async () => {
@@ -61,5 +61,18 @@ describe('Contract endpoints', () => {
             .get(`/contracts/${contractId}`)
             .set('profile_id', profileId);
         expect(res.statusCode).toEqual(404);
+    });
+
+    it('should get all non terminated contracts for the calling profile', async () => {
+        const profileId = 4;
+        const res = await request(app)
+            .get('/contracts')
+            .set('profile_id', profileId);
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.length).toEqual(3);
+        for (const contract of res.body) {
+            expect(contract).toBeTruthy();
+            expect(contract.status).not.toEqual('terminated');
+        }
     });
 });

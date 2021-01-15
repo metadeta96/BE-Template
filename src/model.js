@@ -5,7 +5,14 @@ const sequelize = new Sequelize({
   storage: process.env.DatabaseName || './database.sqlite3'
 });
 
-class Profile extends Sequelize.Model { }
+class Profile extends Sequelize.Model {
+
+  static Type = Object.freeze({
+    Client: 'client',
+    Contractor: 'contractor',
+  });
+
+}
 Profile.init(
   {
     firstName: {
@@ -33,7 +40,101 @@ Profile.init(
   }
 );
 
-class Contract extends Sequelize.Model { }
+class Contract extends Sequelize.Model {
+
+  /**
+   * The possible Status values for the property status
+   */
+  static Status = Object.freeze({
+    New: 'new',
+    InProgress: 'in_progress',
+    Terminated: 'terminated',
+  });
+
+  /**
+   * Build the where query for find methods using the profile
+   * If the type of the profile is neither Client nor Contractor it will return undefined
+   * 
+   * @private
+   * @static
+   * @async
+   * @param {Profile} profile the profile which owns the contract
+   * @param {Object} query optional filters to the final query
+   * @returns {Object} the built query or undefined in case of error
+   */
+  static #buildQueryForProfile(profile, query) {
+    let key;
+    if (profile?.type === Profile.Type.Client) {
+      // Filter by ClientId
+      key = 'ClientId';
+    } else if (profile?.type === Profile.Type.Contractor) {
+      // Filter by ContractorId
+      key = 'ContractorId';
+    } else {
+      // It should not happen unless there is an error in the code
+      return undefined;
+    }
+
+    query = query || {};
+    return Object.assign({}, query, {
+      [key]: profile.id
+    });
+  }
+
+  /**
+   * Find a contract by id for the given profile
+   * Even if the id exists in the database, if the profile does not owns it it will not return the contract.
+   * 
+   * @static
+   * @async
+   * @param {*} profile the profile which owns the contract. Either Client or Contractor
+   * @param {number} id the id of the contract
+   * @returns {Promise<Contract>} the contract or undefined
+   */
+  static async findByIdForProfile(profile, id) {
+    const query = Contract.#buildQueryForProfile(profile, { id });
+    if (!query) {
+      return undefined;
+    }
+
+    return await Contract.findOne({ where: query });
+  }
+
+  /**
+   * Find all contracts for the given profile and query
+   * Only return contracts owned by the profile.
+   * 
+   * @static
+   * @async
+   * @param {*} profile the profile which owns the contract. Either Client or Contractor
+   * @param {*} query an optional query to filter the contracts
+   * @returns {Promise<Array<Contract>>} the queried contracts
+   */
+  static async findAllForProfile(profile, query) {
+    query = Contract.#buildQueryForProfile(profile, query);
+    if (!query) {
+      return [];
+    }
+
+    return await Contract.findAll({ where: query });
+  }
+
+  /**
+   * Find all non terminated contracts for the given profile
+   * Only return contracts owned by the profile.
+   * 
+   * @static
+   * @async
+   * @param {Profile} profile the profile which owns the contract. Either Client or Contractor
+   * @returns {Promise<Array<Contract>>} the queried contracts
+   */
+  static async findAllNonTerminatedForProfile(profile) {
+    return Contract.findAllForProfile(profile, {
+      status: { [Sequelize.Op.ne]: Contract.Status.Terminated }
+    });
+  }
+
+}
 Contract.init(
   {
     terms: {
@@ -75,12 +176,12 @@ Job.init(
   }
 );
 
-Profile.hasMany(Contract, { as: 'Contractor', foreignKey: 'ContractorId' })
-Contract.belongsTo(Profile, { as: 'Contractor' })
-Profile.hasMany(Contract, { as: 'Client', foreignKey: 'ClientId' })
-Contract.belongsTo(Profile, { as: 'Client' })
-Contract.hasMany(Job)
-Job.belongsTo(Contract)
+Profile.hasMany(Contract, { as: 'Contractor', foreignKey: 'ContractorId' });
+Contract.belongsTo(Profile, { as: 'Contractor' });
+Profile.hasMany(Contract, { as: 'Client', foreignKey: 'ClientId' });
+Contract.belongsTo(Profile, { as: 'Client' });
+Contract.hasMany(Job);
+Job.belongsTo(Contract);
 
 module.exports = {
   sequelize,
