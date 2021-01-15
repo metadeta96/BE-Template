@@ -28,8 +28,8 @@ describe('Contract endpoints', () => {
         });
         expect(res.body).toHaveProperty('createdAt');
         expect(res.body).toHaveProperty('updatedAt');
-        expect(typeof res.body.createdAt === 'string').toBeTruthy();
-        expect(typeof res.body.updatedAt === 'string').toBeTruthy();
+        expect(typeof res.body.createdAt === 'string').toBe(true);
+        expect(typeof res.body.updatedAt === 'string').toBe(true);
     });
 
     it('should get contract for the contractor profile which owns it', async () => {
@@ -50,8 +50,8 @@ describe('Contract endpoints', () => {
         });
         expect(res.body).toHaveProperty('createdAt');
         expect(res.body).toHaveProperty('updatedAt');
-        expect(typeof res.body.createdAt === 'string').toBeTruthy();
-        expect(typeof res.body.updatedAt === 'string').toBeTruthy();
+        expect(typeof res.body.createdAt === 'string').toBe(true);
+        expect(typeof res.body.updatedAt === 'string').toBe(true);
     });
 
     it('should not get contract for a profile which does not own it', async () => {

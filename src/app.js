@@ -9,13 +9,15 @@ app.use(bodyParser.json());
 app.set('sequelize', sequelize);
 app.set('models', sequelize.models);
 
+
 /**
  * Get the contract by id for the calling profile
  * 
  * Profile can be either a client or a contractor otherwise it will return 404 automatically
  * 
+ * @param id {number} integer id of the contract
  * @name get/contracts/:id
- * @returns contract by id for the calling profile
+ * @returns {Contract} contract by id for the calling profile
  */
 app.get('/contracts/:id', getProfile, async (req, res) => {
     const { Contract } = req.app.get('models');
@@ -42,6 +44,14 @@ app.get('/contracts/:id', getProfile, async (req, res) => {
     res.json(contract);
 });
 
+/**
+ * Get all non terminated contract for the calling profile
+ * 
+ * Profile can be either a client or a contractor otherwise it will return 404 automatically
+ * 
+ * @name get/contracts
+ * @returns {Array<Contract>} list of non terminated contracts for the calling profile
+ */
 app.get('/contracts', getProfile, async (req, res) => {
     const { Contract } = req.app.get('models');
     const profile = req.profile;
@@ -59,10 +69,6 @@ app.get('/contracts', getProfile, async (req, res) => {
     }
 
     const contracts = await Contract.findAll({ where: query });
-    if (!contracts?.length) {
-        return res.status(404).end();
-    }
-
     res.json(contracts);
 });
 
