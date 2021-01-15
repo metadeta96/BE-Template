@@ -45,4 +45,13 @@ describe('Contract endpoints', () => {
         expect(typeof res.body.createdAt === 'string').toBeTruthy();
         expect(typeof res.body.updatedAt === 'string').toBeTruthy();
     });
+
+    it('should not get contract for a profile which does not own it', async () => {
+        const contractId = 1;
+        const profileId = 2;
+        const res = await request(app)
+            .get(`/contracts/${contractId}`)
+            .set('profile_id', profileId);
+        expect(res.statusCode).toEqual(404);
+    });
 });
