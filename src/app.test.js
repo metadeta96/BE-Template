@@ -76,3 +76,23 @@ describe('Contract endpoints', () => {
         }
     });
 });
+
+describe('Job endpoints', () => {
+    beforeAll(async () => {
+        await reSeedDatabase();
+    });
+
+    it('should get all unpaid jobs for active contracts given the profile', async () => {
+        const profileId = 1;
+        const res = await request(app)
+            .get('/jobs/unpaid')
+            .set('profile_id', profileId);
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.length).toEqual(1);
+        for (const job of res.body) {
+            expect(job).toBeTruthy();
+            expect(job).not.toHaveProperty('Contract');
+            expect(job.paid).not.toEqual(true);
+        }
+    });
+});
