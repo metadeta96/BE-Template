@@ -151,4 +151,44 @@ app.get('/admin/best-profession', async (req, res) => {
     });
 });
 
+/**
+ * Get clients which paid best for jobs for the given datetime range.
+ * The column paymentDate is used to filter the datetime range.
+ * 
+ * @name get/admin/best-clients
+ * @param {string} start - querystring parameter - an optional datetime string for the start of the datetime range of the query
+ * @param {string} end - querystring parameter - an optional datetime string for the end of the datetime range of the query
+ * @param {number} limit - querystring parameter - an optional limiter for the amount of size of the result set. Defaults to 2.
+ * @returns {Array<{"id": number, "fullName": string, "paid": number}>} the client profiles ordered by best payments in the given datetime range.
+ */
+app.get('/admin/best-clients', async (req, res) => {
+    const { Profile, Contract, Job } = req.app.get('models');
+    let { start, end, limit } = req.query;
+
+    start = new Date(start);
+    end = new Date(end);
+    let filterByDates = '';
+    if (!isNaN(start)) {
+        filterByDates += ` AND DATETIME(j.paymentDate) >= DATETIME('${start.toISOString()}')`
+    }
+    if (!isNaN(end)) {
+        filterByDates += ` AND DATETIME(j.paymentDate) < DATETIME('${end.toISOString()}')`
+    }
+    limit = limit ? parseInt(limit, 10) : 2;
+    if (isNaN(limit) || limit <= 0) {
+        limit = 2;
+    }
+
+    const [result] = await sequelize.query(`
+        SELECT p.id 'id', p.firstName 'firstName', max(j.price) 'paid' FROM ${Profile.tableName} p, ${Contract.tableName} c
+        LEFT JOIN ${Job.tableName} j ON c.id = j.ContractId
+        WHERE p.id = c.ClientId AND j.paid = 1 ${filterByDates}
+        GROUP BY p.id
+        ORDER BY max(j.price) DESC
+        LIMIT ${limit}
+    `, { plain: false });
+
+    res.json(result);
+});
+
 module.exports = app;
