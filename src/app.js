@@ -14,7 +14,7 @@ app.set('models', sequelize.models);
  * 
  * In case no contract is found it will return 404
  * 
- * @param id {number} integer id of the contract
+ * @param {number} id integer id of the contract
  * @name get/contracts/:id
  * @returns {Contract} contract by id for the calling profile
  */
@@ -63,11 +63,12 @@ app.get('/jobs/unpaid', getProfile, async (req, res) => {
 });
 
 /**
- * Get all unpaid jobs for the calling profile
- * Only active contracts are considerated.
+ * Pay for a unpaid job given the calling profile
+ * If the job can not be paid or found status 400 is returned.
  * 
- * @name get/jobs/unpaid
- * @returns {Array<Contract>} list of non terminated contracts for the calling profile
+ * @name post/jobs/:job_id/pay
+ * @param {number} job_id integer id of the job to be paid
+ * @returns {void} status 200 on success
  */
 app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
     const { Job } = req.app.get('models');
