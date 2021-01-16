@@ -220,7 +220,6 @@ class Job extends Sequelize.Model {
         where: contractQuery,
         required: true,
       }],
-      attributes: { exclude: ['Contract'] },
       where: { paid: { [Sequelize.Op.not]: true } },
     });
   }

@@ -54,10 +54,10 @@ app.get('/contracts', getProfile, async (req, res) => {
  * @returns {Array<Contract>} list of non terminated contracts for the calling profile
  */
 app.get('/jobs/unpaid', getProfile, async (req, res) => {
-    const { Contract } = req.app.get('models');
+    const { Job } = req.app.get('models');
     const profile = req.profile;
 
-    const contracts = await Contract.findAllNonTerminatedForProfile(profile);
+    const contracts = await Job.findAllUnpaidJobsForProfile(profile);
 
     res.json(contracts);
 });

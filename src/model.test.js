@@ -79,7 +79,8 @@ describe('Job model', () => {
         expect(jobs.length).toEqual(1);
         for (const job of jobs) {
             expect(job).toBeTruthy();
-            expect(job.paid).not.toEqual(true);
+            expect(job.Contract).toBeTruthy();
+            expect(job.paid).toBeFalsy();
         }
     });
 

@@ -91,8 +91,8 @@ describe('Job endpoints', () => {
         expect(res.body.length).toEqual(1);
         for (const job of res.body) {
             expect(job).toBeTruthy();
-            expect(job).not.toHaveProperty('Contract');
-            expect(job.paid).not.toEqual(true);
+            expect(job.Contract).toBeTruthy();
+            expect(job.paid).toBeFalsy();
         }
     });
 });
