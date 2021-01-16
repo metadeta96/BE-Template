@@ -7,7 +7,7 @@ const handleError = (err, req, res, next) => {
     if (err instanceof ErrorResponse) {
         status = err.status || 500;
         message = err.message;
-        additionalMessage = err.additionalMessage || undefined;
+        additionalMessage = err.additionalMessage;
     } else if (err instanceof Error) {
         message = err.message;
     } else {

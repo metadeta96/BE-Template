@@ -38,6 +38,7 @@ describe('Profile /balances/deposit/:userId', () => {
         expect(res.statusCode).toEqual(400);
         expect(res.body).toMatchObject({
             error: 'It is not possible to deposit this amount on this profile balance',
+            message: 'The client profile is not valid for this operation',
         });
     });
 
@@ -50,6 +51,7 @@ describe('Profile /balances/deposit/:userId', () => {
         expect(res.statusCode).toEqual(400);
         expect(res.body).toMatchObject({
             error: 'It is not possible to deposit this amount on this profile balance',
+            message: 'A client cna not deposit more than 25% of the sum of the unpaid jobs price',
         });
     });
 });

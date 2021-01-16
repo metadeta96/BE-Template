@@ -28,6 +28,7 @@ class ErrorResponse extends Error {
     constructor(what, status, additionalMessage) {
         super(what);
         this.#status = status || 500;
+        this.#additionalMessage = additionalMessage || undefined;
     }
 
     /**

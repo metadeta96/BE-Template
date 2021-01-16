@@ -57,7 +57,8 @@ describe('Job /jobs/:job_id/pay', () => {
             .set('profile_id', profileId);
         expect(res.statusCode).toEqual(404);
         expect(res.body).toMatchObject({
-            error: 'It is not possible to pay for this job'
+            error: 'It is not possible to pay for this job',
+            message: 'There is no job to be paid',
         });
     });
 
@@ -69,7 +70,8 @@ describe('Job /jobs/:job_id/pay', () => {
             .set('profile_id', profileId);
         expect(res.statusCode).toEqual(404);
         expect(res.body).toMatchObject({
-            error: 'It is not possible to pay for this job'
+            error: 'It is not possible to pay for this job',
+            message: 'There is no job to be paid',
         });
     });
 });
