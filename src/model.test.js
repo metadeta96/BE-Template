@@ -1,5 +1,5 @@
 const { Profile, Contract, Job } = require('./model');
-const { PaymentNotPossibleError, NotEnoughFundsError, DepositNotPossibleError } = require('./error');
+const { JobPaymentNotPossibleError, NotEnoughFundsError, DepositNotPossibleError } = require('./error');
 
 async function reSeedDatabase() {
     return require('../scripts/seedDb')();
@@ -102,7 +102,7 @@ describe('Job model', () => {
             await Job.payForJob(profile, paidJob.id);
             fail('Should have thrown an exception');
         } catch (err) {
-            expect(err).toBeInstanceOf(PaymentNotPossibleError);
+            expect(err).toBeInstanceOf(JobPaymentNotPossibleError);
         }
 
         const job = await Job.findOne({ where: { id: paidJob.id } });
@@ -118,7 +118,7 @@ describe('Job model', () => {
             await Job.payForJob(undefined, jobId);
             fail('Should have thrown an exception');
         } catch (err) {
-            expect(err).toBeInstanceOf(PaymentNotPossibleError);
+            expect(err).toBeInstanceOf(JobPaymentNotPossibleError);
         }
 
         const job = await Job.findOne({ where: { id: jobId } });
@@ -184,7 +184,7 @@ describe('Profile model payContractor', () => {
             await Profile.payContractor(undefined, contractorProfile, price);
             fail('Should have thrown an exception');
         } catch (err) {
-            expect(err).toBeInstanceOf(PaymentNotPossibleError);
+            expect(err).toBeInstanceOf(JobPaymentNotPossibleError);
         }
 
         expect(clientProfile.balance).toEqual(clientBalance);
@@ -202,7 +202,7 @@ describe('Profile model payContractor', () => {
             await Profile.payContractor(clientProfile, undefined, price);
             fail('Should have thrown an exception');
         } catch (err) {
-            expect(err).toBeInstanceOf(PaymentNotPossibleError);
+            expect(err).toBeInstanceOf(JobPaymentNotPossibleError);
         }
 
         expect(clientProfile.balance).toEqual(clientBalance);
@@ -220,7 +220,7 @@ describe('Profile model payContractor', () => {
             await Profile.payContractor(clientProfile, contractorProfile, price);
             fail('Should have thrown an exception');
         } catch (err) {
-            expect(err).toBeInstanceOf(PaymentNotPossibleError);
+            expect(err).toBeInstanceOf(JobPaymentNotPossibleError);
         }
 
         expect(clientProfile.balance).toEqual(clientBalance);
@@ -238,7 +238,7 @@ describe('Profile model payContractor', () => {
             await Profile.payContractor(clientProfile, contractorProfile, price);
             fail('Should have thrown an exception');
         } catch (err) {
-            expect(err).toBeInstanceOf(PaymentNotPossibleError);
+            expect(err).toBeInstanceOf(JobPaymentNotPossibleError);
         }
 
         expect(clientProfile.balance).toEqual(clientBalance);
@@ -274,7 +274,7 @@ describe('Profile model payContractor', () => {
             await Profile.payContractor(clientProfile, clientProfile, price);
             fail('Should have thrown an exception');
         } catch (err) {
-            expect(err).toBeInstanceOf(PaymentNotPossibleError);
+            expect(err).toBeInstanceOf(JobPaymentNotPossibleError);
         }
 
         expect(clientProfile.balance).toEqual(clientBalance);
@@ -292,7 +292,7 @@ describe('Profile model payContractor', () => {
             await Profile.payContractor(contractorProfile, contractorProfile, price);
             fail('Should have thrown an exception');
         } catch (err) {
-            expect(err).toBeInstanceOf(PaymentNotPossibleError);
+            expect(err).toBeInstanceOf(JobPaymentNotPossibleError);
         }
 
         expect(clientProfile.balance).toEqual(clientBalance);
@@ -310,7 +310,7 @@ describe('Profile model payContractor', () => {
             await Profile.payContractor(clientProfile, clientProfile, price);
             fail('Should have thrown an exception');
         } catch (err) {
-            expect(err).toBeInstanceOf(PaymentNotPossibleError);
+            expect(err).toBeInstanceOf(JobPaymentNotPossibleError);
         }
 
         expect(clientProfile.balance).toEqual(clientBalance);

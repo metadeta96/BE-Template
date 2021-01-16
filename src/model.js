@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize');
-const { PaymentNotPossibleError, NotEnoughFundsError, DepositNotPossibleError } = require('./error');
+const { JobPaymentNotPossibleError, NotEnoughFundsError, DepositNotPossibleError } = require('./error');
 
 function buildSequelize() {
   if (process.env.NODE_ENV === 'test') {
@@ -67,15 +67,15 @@ class Profile extends Sequelize.Model {
    */
   static async payContractor(clientProfile, contractorProfile, amount) {
     if (!this.#validateProfile(clientProfile, Profile.Type.Client)) {
-      throw new PaymentNotPossibleError('The client profile is not valid for this operation');
+      throw new JobPaymentNotPossibleError('The client profile is not valid for this operation');
     } else if (!this.#validateProfile(contractorProfile, Profile.Type.Contractor)) {
-      throw new PaymentNotPossibleError('The contractor profile is not valid for this operation');
+      throw new JobPaymentNotPossibleError('The contractor profile is not valid for this operation');
     } else if (!this.#validateAmount(amount)) {
-      throw new PaymentNotPossibleError('The amount is not valid for this operation');
+      throw new JobPaymentNotPossibleError('The amount is not valid for this operation');
     } else if (clientProfile.balance < amount) {
       throw new NotEnoughFundsError('The balance of the client is less than the amount to be transfered');
     } else if (clientProfile.id === contractorProfile.id) {
-      throw new PaymentNotPossibleError('Transfering to the same account is not allowed');
+      throw new JobPaymentNotPossibleError('Transfering to the same account is not allowed');
     }
 
     clientProfile.balance -= amount;
@@ -313,7 +313,7 @@ class Job extends Sequelize.Model {
    */
   static async payForJob(profile, id) {
     if (!profile) {
-      throw new PaymentNotPossibleError('There is no job to be paid', 404);
+      throw new JobPaymentNotPossibleError('There is no job to be paid', 404);
     }
 
     const job = await Job.findOne({
@@ -338,7 +338,7 @@ class Job extends Sequelize.Model {
     });
 
     if (!job) {
-      throw new PaymentNotPossibleError('There is no job to be paid', 404);
+      throw new JobPaymentNotPossibleError('There is no job to be paid', 404);
     }
     const { Client, Contractor } = job.Contract;
 

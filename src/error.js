@@ -43,6 +43,7 @@ class ErrorResponse extends Error {
 }
 
 class PaymentNotPossibleError extends ErrorResponse {
+class JobPaymentNotPossibleError extends ErrorResponse {
     constructor(message, status) {
         super('It is not possible to pay for this job', status || 400, message);
     }
@@ -62,7 +63,7 @@ class DepositNotPossibleError extends ErrorResponse {
 
 module.exports = {
     ErrorResponse,
-    PaymentNotPossibleError,
+    JobPaymentNotPossibleError,
     NotEnoughFundsError,
     DepositNotPossibleError,
 };
