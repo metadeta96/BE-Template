@@ -6,7 +6,7 @@ async function reSeedDatabase() {
 }
 
 describe('Contract endpoints', () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await reSeedDatabase();
     });
 
@@ -78,7 +78,7 @@ describe('Contract endpoints', () => {
 });
 
 describe('Job endpoints', () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await reSeedDatabase();
     });
 
@@ -112,6 +112,9 @@ describe('Job endpoints', () => {
             .post(`/jobs/${jobId}/pay`)
             .set('profile_id', profileId);
         expect(res.statusCode).toEqual(400);
+        expect(res.body).toMatchObject({
+            error: 'It is not possible to pay for this job'
+        });
     });
 
     it('should not pay for a job if it is not found given the profile', async () => {
@@ -121,5 +124,43 @@ describe('Job endpoints', () => {
             .post(`/jobs/${jobId}/pay`)
             .set('profile_id', profileId);
         expect(res.statusCode).toEqual(400);
+        expect(res.body).toMatchObject({
+            error: 'It is not possible to pay for this job'
+        });
+    });
+});
+
+describe('Profile endpoints', () => {
+    it('should deposit money into a client balance', async () => {
+        const profileId = 1;
+        const amount = 20;
+        const res = await request(app)
+            .post(`/balances/deposit/${profileId}`)
+            .send({ amount });
+        expect(res.statusCode).toEqual(200);
+    });
+
+    it('should not deposit money into a non client balance', async () => {
+        const profileId = 5;
+        const amount = 20;
+        const res = await request(app)
+            .post(`/balances/deposit/${profileId}`)
+            .send({ amount });
+        expect(res.statusCode).toEqual(400);
+        expect(res.body).toMatchObject({
+            error: 'It is not possible to make this deposit'
+        });
+    });
+
+    it('should not deposit money more than 25% of the sum of the unpaid jobs price', async () => {
+        const profileId = 1;
+        const amount = 99999999999;
+        const res = await request(app)
+            .post(`/balances/deposit/${profileId}`)
+            .send({ amount });
+        expect(res.statusCode).toEqual(400);
+        expect(res.body).toMatchObject({
+            error: 'It is not possible to make this deposit'
+        });
     });
 });

@@ -14,8 +14,9 @@ app.set('models', sequelize.models);
  * 
  * In case no contract is found it will return 404
  * 
- * @param {number} id integer id of the contract
  * @name get/contracts/:id
+ * @param {number} profile_id - header - id of the calling profile. Validated on the middleware getProfile
+ * @param {number} id - path parameter -  integer id of the contract
  * @returns {Contract} contract by id for the calling profile
  */
 app.get('/contracts/:id', getProfile, async (req, res) => {
@@ -35,6 +36,7 @@ app.get('/contracts/:id', getProfile, async (req, res) => {
  * Get all non terminated contract for the calling profile
  * 
  * @name get/contracts
+ * @param {number} profile_id - header - id of the calling profile. Validated on the middleware getProfile
  * @returns {Array<Contract>} list of non terminated contracts for the calling profile
  */
 app.get('/contracts', getProfile, async (req, res) => {
@@ -51,6 +53,7 @@ app.get('/contracts', getProfile, async (req, res) => {
  * Only active contracts are considerated.
  * 
  * @name get/jobs/unpaid
+ * @param {number} profile_id - header - id of the calling profile. Validated on the middleware getProfile
  * @returns {Array<Contract>} list of non terminated contracts for the calling profile
  */
 app.get('/jobs/unpaid', getProfile, async (req, res) => {
@@ -67,7 +70,8 @@ app.get('/jobs/unpaid', getProfile, async (req, res) => {
  * If the job can not be paid or found status 400 is returned.
  * 
  * @name post/jobs/:job_id/pay
- * @param {number} job_id integer id of the job to be paid
+ * @param {number} profile_id - header - id of the calling profile. Validated on the middleware getProfile
+ * @param {number} job_id - path parameter - integer id of the job to be paid
  * @returns {void} status 200 on success
  */
 app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
@@ -78,6 +82,30 @@ app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
     const result = await Job.payForJob(profile, jobId);
     if (!result) {
         return res.status(400).json({ error: 'It is not possible to pay for this job' }).end();
+    }
+
+    res.sendStatus(200);
+});
+
+/**
+ * Deposit money into a client balance
+ * If the profile is not a client it will return 400.
+ * If the amount is invalid or more than 25% of the sum of the unpaid jobs price it will also return 400.
+ * 
+ * @name post/balances/deposit/:userId
+ * @param {number} userId - path parameter - integer id of the profile to receive the deposit
+ * @param {number} amount - body parameter - amount to be deposited
+ * @returns {void} status 200 on success
+ */
+app.post('/balances/deposit/:userId', async (req, res) => {
+    const { Profile } = req.app.get('models');
+    const profileId = req.params.userId;
+    const { amount } = req.body;
+    const profile = await Profile.findOne({ where: { id: profileId } });
+
+    const result = await Profile.depositOnClientBalance(profile, amount);
+    if (!result) {
+        return res.status(400).json({ error: 'It is not possible to make this deposit' }).end();
     }
 
     res.sendStatus(200);

@@ -23,6 +23,33 @@ class Profile extends Sequelize.Model {
   });
 
   /**
+   * Validates that the amount is a number and bigger than zero
+   * Transactions do not accept negative or non number amounts.
+   * 
+   * @private
+   * @static
+   * @param {number} amount the amount to be validated
+   * @returns {boolean} true if the amount is valid
+   */
+  static #validateAmount(amount) {
+    return typeof amount === 'number' && amount > 0;
+  }
+
+  /**
+   * Validates that the profile is an instace of Profile and has the expected type
+   * Some transactions can only happen for the appropriate profile
+   * 
+   * @private
+   * @static
+   * @param {Profile} profile 
+   * @param {string} expectedType 
+   * @returns {boolean} true if the profile is valid
+   */
+  static #validateProfile(profile, expectedType) {
+    return profile && profile instanceof Profile && profile.type === expectedType;
+  }
+
+  /**
    * Transfer money from one client to a contractor
    * The transfer only occurs if the client balance is enough for the amount (balance >= amount)
    * It is also not possible to send money when both profiles are the same or it is not form a client to a contractor
@@ -38,13 +65,11 @@ class Profile extends Sequelize.Model {
    * @returns {Promise<boolean>} true if the transactions was possible otherwise false
    */
   static async payContractor(clientProfile, contractorProfile, amount) {
-    if (!clientProfile || !(clientProfile instanceof Profile)) {
+    if (!this.#validateProfile(clientProfile, Profile.Type.Client)) {
       return false;
-    } else if (!contractorProfile || !(contractorProfile instanceof Profile)) {
+    } else if (!this.#validateProfile(contractorProfile, Profile.Type.Contractor)) {
       return false;
-    } else if (!amount || amount <= 0) {
-      return false;
-    } else if (clientProfile.type !== Profile.Type.Client || contractorProfile.type !== Profile.Type.Contractor) {
+    } else if (!this.#validateAmount(amount)) {
       return false;
     } else if (clientProfile.balance < amount) {
       return false;
@@ -60,6 +85,37 @@ class Profile extends Sequelize.Model {
 
     return true;
   }
+
+  /**
+   * Deposit money into the client balance.
+   * It is only possible to deposit on profiles of type client and if the amount is a positive non zero number.
+   * It is not allowed to deposit more than 25% of the sum of the unpaid jobs price.
+   * 
+   * @static
+   * @async
+   * @param {Profile} clientProfile the client profile which is going to deposit money
+   * @param {number} amount the amount to be deposited into the client balance
+   * @returns {Promise<boolean>} true if the transactions was possible otherwise false
+   */
+  static async depositOnClientBalance(clientProfile, amount) {
+    if (!this.#validateProfile(clientProfile, Profile.Type.Client)) {
+      return false;
+    } else if (!this.#validateAmount(amount)) {
+      return false;
+    }
+
+    const totalToBePaid = await Job.getTotalToBePaid(clientProfile);
+    if (totalToBePaid * 0.25 < amount) {
+      return false;
+    }
+
+    clientProfile.balance += amount;
+
+    await clientProfile.save();
+
+    return true;
+  }
+
 }
 Profile.init(
   {
@@ -215,6 +271,31 @@ class Job extends Sequelize.Model {
       return [];
     }
     return Job.findAll({
+      include: [{
+        model: Contract,
+        where: contractQuery,
+        required: true,
+      }],
+      where: { paid: { [Sequelize.Op.not]: true } },
+    });
+  }
+
+  /**
+   * Get the total to be paid in jobs given the profile
+   * If no job is found or the profile is invalid it will return 0 instead.
+   * 
+   * @static
+   * @async
+   * @param {Profile} profile the profile which owns the jobs
+   * @returns {Promise<number>} the total to be paid
+   */
+  static async getTotalToBePaid(profile) {
+    const contractQuery = Contract.buildQueryForProfile(profile, { status: Contract.Status.InProgress });
+    if (!contractQuery) {
+      return 0;
+    }
+
+    return Job.sum('price', {
       include: [{
         model: Contract,
         where: contractQuery,
