@@ -55,7 +55,7 @@ describe('Job /jobs/:job_id/pay', () => {
         const res = await request(app)
             .post(`/jobs/${jobId}/pay`)
             .set('profile_id', profileId);
-        expect(res.statusCode).toEqual(400);
+        expect(res.statusCode).toEqual(404);
         expect(res.body).toMatchObject({
             error: 'It is not possible to pay for this job'
         });
@@ -67,7 +67,7 @@ describe('Job /jobs/:job_id/pay', () => {
         const res = await request(app)
             .post(`/jobs/${jobId}/pay`)
             .set('profile_id', profileId);
-        expect(res.statusCode).toEqual(400);
+        expect(res.statusCode).toEqual(404);
         expect(res.body).toMatchObject({
             error: 'It is not possible to pay for this job'
         });

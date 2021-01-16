@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { getProfile } = require('../middleware/getProfile');
+const { getProfile, handleError } = require('../middleware');
 
 const router = new Router();
 
@@ -29,17 +29,20 @@ router.get('/jobs/unpaid', getProfile, async (req, res) => {
  * @param {number} job_id - path parameter - integer id of the job to be paid
  * @returns {void} status 200 on success
  */
-router.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
+router.post('/jobs/:job_id/pay', getProfile, async (req, res, next) => {
     const { Job } = req.app.get('models');
     const jobId = req.params.job_id;
     const profile = req.profile;
 
-    const result = await Job.payForJob(profile, jobId);
-    if (!result) {
-        return res.status(400).json({ error: 'It is not possible to pay for this job' }).end();
+    try {
+        await Job.payForJob(profile, jobId);
+    } catch (err) {
+        return next(err);
     }
 
     res.sendStatus(200);
 });
+
+router.use(handleError);
 
 module.exports = router;

@@ -37,7 +37,7 @@ describe('Profile /balances/deposit/:userId', () => {
             .send({ amount });
         expect(res.statusCode).toEqual(400);
         expect(res.body).toMatchObject({
-            error: 'It is not possible to make this deposit'
+            error: 'It is not possible to deposit this amount on this profile balance',
         });
     });
 
@@ -49,7 +49,7 @@ describe('Profile /balances/deposit/:userId', () => {
             .send({ amount });
         expect(res.statusCode).toEqual(400);
         expect(res.body).toMatchObject({
-            error: 'It is not possible to make this deposit'
+            error: 'It is not possible to deposit this amount on this profile balance',
         });
     });
 });

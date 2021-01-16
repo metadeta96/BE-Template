@@ -1,4 +1,5 @@
 const Sequelize = require('sequelize');
+const { PaymentNotPossibleError, NotEnoughFundsError, DepositNotPossibleError } = require('./error');
 
 function buildSequelize() {
   if (process.env.NODE_ENV === 'test') {
@@ -7,7 +8,7 @@ function buildSequelize() {
       logging: false,
     });
   }
-  return new Sequelize('sqlite', {
+  return new Sequelize({
     dialect: 'sqlite',
     storage: './database.sqlite3',
   });
@@ -53,7 +54,7 @@ class Profile extends Sequelize.Model {
    * Transfer money from one client to a contractor
    * The transfer only occurs if the client balance is enough for the amount (balance >= amount)
    * It is also not possible to send money when both profiles are the same or it is not form a client to a contractor
-   * Do not provide zero or negative amounts. It will resolve to false.
+   * Do not provide zero or negative amounts.
    * Both clientProfile and contractorProfile should be an instance of Profile
    * If there is an error during the update the promise will be rejected
    * 
@@ -62,19 +63,19 @@ class Profile extends Sequelize.Model {
    * @param {Profile} clientProfile the client profile which is going to send the money
    * @param {Profile} contractorProfile the contractor profile which will receive the money
    * @param {number} amount the amount to be transfered
-   * @returns {Promise<boolean>} true if the transactions was possible otherwise false
+   * @returns {Promise<{}>} an empty promise if there is no error
    */
   static async payContractor(clientProfile, contractorProfile, amount) {
     if (!this.#validateProfile(clientProfile, Profile.Type.Client)) {
-      return false;
+      throw new PaymentNotPossibleError('The client profile is not valid for this operation');
     } else if (!this.#validateProfile(contractorProfile, Profile.Type.Contractor)) {
-      return false;
+      throw new PaymentNotPossibleError('The contractor profile is not valid for this operation');
     } else if (!this.#validateAmount(amount)) {
-      return false;
+      throw new PaymentNotPossibleError('The amount is not valid for this operation');
     } else if (clientProfile.balance < amount) {
-      return false;
+      throw new NotEnoughFundsError('The balance of the client is less than the amount to be transfered');
     } else if (clientProfile.id === contractorProfile.id) {
-      return false;
+      throw new PaymentNotPossibleError('Transfering to the same account is not allowed');
     }
 
     clientProfile.balance -= amount;
@@ -82,8 +83,6 @@ class Profile extends Sequelize.Model {
 
     await clientProfile.save();
     await contractorProfile.save();
-
-    return true;
   }
 
   /**
@@ -95,25 +94,23 @@ class Profile extends Sequelize.Model {
    * @async
    * @param {Profile} clientProfile the client profile which is going to deposit money
    * @param {number} amount the amount to be deposited into the client balance
-   * @returns {Promise<boolean>} true if the transactions was possible otherwise false
+   * @returns {Promise<{}>} an empty promise if there is no error
    */
   static async depositOnClientBalance(clientProfile, amount) {
     if (!this.#validateProfile(clientProfile, Profile.Type.Client)) {
-      return false;
+      throw new DepositNotPossibleError('The client profile is not valid for this operation');
     } else if (!this.#validateAmount(amount)) {
-      return false;
+      throw new DepositNotPossibleError('The amount is not valid for this operation');
     }
 
     const totalToBePaid = await Job.getTotalToBePaid(clientProfile);
     if (totalToBePaid * 0.25 < amount) {
-      return false;
+      throw new DepositNotPossibleError('A client cna not deposit more than 25% of the sum of the unpaid jobs price');
     }
 
     clientProfile.balance += amount;
 
     await clientProfile.save();
-
-    return true;
   }
 
 }
@@ -312,11 +309,11 @@ class Job extends Sequelize.Model {
    * @static
    * @async
    * @param {Profile} profile the client profile which owns the job
-   * @returns {Promise<boolean>} true if the transactions was possible otherwise false
+   * @returns {Promise<{}>} an empty promise if there is no error
    */
   static async payForJob(profile, id) {
     if (!profile) {
-      return false;
+      throw new PaymentNotPossibleError('There is no job to be paid', 404);
     }
 
     const job = await Job.findOne({
@@ -341,20 +338,15 @@ class Job extends Sequelize.Model {
     });
 
     if (!job) {
-      return false;
+      throw new PaymentNotPossibleError('There is no job to be paid', 404);
     }
     const { Client, Contractor } = job.Contract;
 
-    const paymentResult = await Profile.payContractor(Client, Contractor, job.price);
-    if (!paymentResult) {
-      return false;
-    }
+    await Profile.payContractor(Client, Contractor, job.price);
 
     job.paid = true;
     job.paymentDate = new Date();
     await job.save();
-
-    return true;
   }
 
 }

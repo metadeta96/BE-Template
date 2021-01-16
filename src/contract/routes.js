@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { getProfile } = require('../middleware/getProfile');
+const { getProfile, handleError } = require('../middleware');
 
 const router = new Router();
 
@@ -41,5 +41,7 @@ router.get('/contracts', getProfile, async (req, res) => {
 
     res.json(contracts);
 });
+
+router.use(handleError);
 
 module.exports = router;

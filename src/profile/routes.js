@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const { handleError } = require('../middleware');
 
 const router = new Router();
 
@@ -12,18 +13,21 @@ const router = new Router();
  * @param {number} amount - body parameter - amount to be deposited
  * @returns {void} status 200 on success
  */
-router.post('/balances/deposit/:userId', async (req, res) => {
+router.post('/balances/deposit/:userId', async (req, res, next) => {
     const { Profile } = req.app.get('models');
     const profileId = req.params.userId;
     const { amount } = req.body;
     const profile = await Profile.findOne({ where: { id: profileId } });
 
-    const result = await Profile.depositOnClientBalance(profile, amount);
-    if (!result) {
-        return res.status(400).json({ error: 'It is not possible to make this deposit' }).end();
+    try {
+        await Profile.depositOnClientBalance(profile, amount);
+    } catch (err) {
+        return next(err);
     }
 
     res.sendStatus(200);
 });
+
+router.use(handleError);
 
 module.exports = router;

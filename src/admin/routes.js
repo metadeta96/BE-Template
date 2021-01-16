@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const { handleError } = require('../middleware');
 
 const router = new Router();
 
@@ -83,5 +84,7 @@ router.get('/admin/best-clients', async (req, res) => {
 
     res.json(result);
 });
+
+router.use(handleError);
 
 module.exports = router;

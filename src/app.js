@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const { sequelize } = require('./model');
+const { handleError } = require('./middleware/handleError');
+
 const contract = require('./contract/routes');
 const job = require('./job/routes');
 const profile = require('./profile/routes');
@@ -21,8 +23,10 @@ app.use(job);
 app.use(profile);
 app.use(admin);
 
+app.use(handleError);
+
 app.use((req, res) => {
     return res.sendStatus(404);
-})
+});
 
 module.exports = app;
