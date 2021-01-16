@@ -1,75 +1,41 @@
 # DEEL BACKEND TASK
 
-  
-
 💫 Welcome! 🎉
 
+This is a backend exercise. You can find the original link [here](https://github.com/pcerminato/BE-Template).
 
-This backend exercise involves building a Node.js/Express.js app that will serve a REST API. We imagine you should spend around 3 hours at implement this feature.
+It was developed using [TDD](https://en.wikipedia.org/wiki/Test-driven_development), [gitflow](https://datasift.github.io/gitflow/IntroducingGitFlow.html) and [commitlint](https://commitlint.js.org/#/).
 
-## Data Models
-
-> **All models are defined in src/model.js**
-
-### Profile
-A profile can be either a `client` or a `contractor`. 
-clients create contracts with contractors. contractor does jobs for clients and get paid.
-Each profile has a balance property.
-
-### Contract
-A contract between and client and a contractor.
-Contracts have 3 statuses, `new`, `in_progress`, `terminated`. contracts are considered active only when in status `in_progress`
-Contracts group jobs within them.
-
-### Job
-contractor get paid for jobs by clients under a certain contract.
-
-## Getting Set Up
-
-  
-The exercise requires [Node.js](https://nodejs.org/en/) to be installed. We recommend using the LTS version.
+## Set Up
 
   
 
-1. Start by cloning this repository.
+- Start by cloning this repository.
 
   
 
-1. In the repo root directory, run `npm install` to gather all dependencies.
+- In the repo root directory, run `npm install` to gather all dependencies.
 
   
 
-1. Next, `npm run seed` will seed the local SQLite database. **Warning: This will drop the database if it exists**. The database lives in a local file `database.sqlite3`.
+- Run `npm test` to execute the unit tests.
 
   
 
-1. Then run `npm start` which should start both the server and the React client.
+- Next, `npm run seed` will seed the local SQLite database. **Warning: This will drop the database if it exists**. The database lives in a local file `database.sqlite3`.
 
   
 
-❗️ **Make sure you commit all changes to the master branch!**
-
-  
-  
-
-## Technical Notes
+- Then run `npm start` which should start both the server and the React client.
 
   
 
-- The server is running with [nodemon](https://nodemon.io/) which will automatically restart for you when you modify and save a file.
 
-- The database provider is SQLite, which will store data in a file local to your repository called `database.sqlite3`. The ORM [Sequelize](http://docs.sequelizejs.com/) is on top of it. You should only have to interact with Sequelize - **please spend some time reading sequelize documentation before starting the exercise.**
-
-- To authenticate users use the `getProfile` middleware that is located under src/middleware/getProfile.js. users are authenticated by passing `profile_id` in the request header. after a user is authenticated his profile will be available under `req.profile`. make sure only users that are on the contract can access their contracts.
-- The server is running on port 3001.
+## APIs Implemented
 
   
 
-## APIs To Implement 
-
-  
-
-Below is a list of the required API's for the application.
+Below is a list of the implemented APIs for this task
 
   
 
@@ -109,18 +75,18 @@ Below is a list of the required API's for the application.
 
   
 
-## Going Above and Beyond the Requirements
+## What could be improved
 
-Given the time expectations of this exercise, we don't expect anyone to submit anything super fancy, but if you find yourself with extra time, any extra credit item(s) that showcase your unique strengths would be awesome! 🙌
+* Implement an authentication API and replace profile_id in the headera by a token instead. From the token it is possible to find out which profile is it.
 
-It would be great for example if you'd write some unit test / simple frontend demostrating calls to your fresh APIs.
+* Admin API is public, it should be private or run on a separated service.
 
-  
+* In the Profile API, the route /balances/deposit/:userId is also public. It should be private and if it is going to be called by client itself then it should use a token instead of passing the profile id in the path as parameter.
 
-## Submitting the Assignment
+* Use Typescript for better statical analysis.
 
-When you have finished the assignment, create a github repository and send us the link.
+* Test the performance of the raw queries in the Admin API against full sequelize implementations.
 
-  
+* Use dotenv for controlling environment variables
 
-Thank you and good luck! 🙏
+* Use another database instead of Sqlite3
