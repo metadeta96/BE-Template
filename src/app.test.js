@@ -131,6 +131,10 @@ describe('Job endpoints', () => {
 });
 
 describe('Profile endpoints', () => {
+    beforeEach(async () => {
+        await reSeedDatabase();
+    });
+
     it('should deposit money into a client balance', async () => {
         const profileId = 1;
         const amount = 20;
@@ -162,5 +166,58 @@ describe('Profile endpoints', () => {
         expect(res.body).toMatchObject({
             error: 'It is not possible to make this deposit'
         });
+    });
+});
+
+describe('Admin endpoints', () => {
+    beforeEach(async () => {
+        await reSeedDatabase();
+    });
+
+    it('should return the most well paid profession', async () => {
+        const res = await request(app)
+            .get(`/admin/best-profession`);
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.body).toMatchObject({
+            profession: 'Programmer',
+        });
+    });
+
+    it('should return the most well paid profession starting at a datetime', async () => {
+        const res = await request(app)
+            .get(`/admin/best-profession?start=2020-08-17`);
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.body).toMatchObject({
+            profession: 'Musician',
+        });
+    });
+
+    it('should return the most well paid profession ending at a datetime', async () => {
+        const res = await request(app)
+            .get(`/admin/best-profession?end=2020-08-16`);
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.body).toMatchObject({
+            profession: 'Programmer',
+        });
+    });
+
+    it('should return the most well paid profession on a given datetime range', async () => {
+        const res = await request(app)
+            .get(`/admin/best-profession?start=2020-08-14&end=2020-08-17`);
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.body).toMatchObject({
+            profession: 'Programmer',
+        });
+    });
+
+    it('should return 404 if there is no data for the given datetime range', async () => {
+        const res = await request(app)
+            .get(`/admin/best-profession?start=2022-08-14&end=2022-08-17`);
+
+        expect(res.statusCode).toEqual(404);
     });
 });

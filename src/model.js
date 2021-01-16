@@ -9,7 +9,7 @@ function buildSequelize() {
   }
   return new Sequelize('sqlite', {
     dialect: 'sqlite',
-    storage: process.env.Database || './database.sqlite3',
+    storage: './database.sqlite3',
   });
 }
 
