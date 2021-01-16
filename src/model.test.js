@@ -122,6 +122,12 @@ describe('Job model', () => {
         expect(job.paid).toBeFalsy();
         expect(job.paymentDate).toBeFalsy();
     });
+
+    it('should return the total price of jobs to be paid given the profile', async () => {
+        const total = await Job.getTotalToBePaid(profile);
+
+        expect(total).toEqual(201);
+    })
 });
 
 

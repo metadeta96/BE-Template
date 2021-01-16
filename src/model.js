@@ -224,6 +224,22 @@ class Job extends Sequelize.Model {
     });
   }
 
+  static async getTotalToBePaid(profile) {
+    const contractQuery = Contract.buildQueryForProfile(profile, { status: Contract.Status.InProgress });
+    if (!contractQuery) {
+      return undefined;
+    }
+
+    return Job.sum('price', {
+      include: [{
+        model: Contract,
+        where: contractQuery,
+        required: true,
+      }],
+      where: { paid: { [Sequelize.Op.not]: true } },
+    });
+  }
+
   /**
    * Pay a job from the given client profile
    * Only pay if the job has not been paid yet and the profile belongs to a client.
