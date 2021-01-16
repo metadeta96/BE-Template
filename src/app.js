@@ -1,9 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const helmet = require('helmet');
 const { sequelize } = require('./model');
 const { getProfile } = require('./middleware/getProfile');
 
 const app = express();
+
+app.use(helmet());
+app.disable('x-powered-by');
+
 app.use(bodyParser.json());
 app.set('sequelize', sequelize);
 app.set('models', sequelize.models);
