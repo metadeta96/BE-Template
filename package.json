@@ -11,7 +11,7 @@
   "scripts": {
     "start": "nodemon ./src/server.js",
     "seed": "node ./scripts/seedDb.js",
-    "test": "DatabaseName=./test-database.sqlite3 jest"
+    "test": "NODE_ENV=test jest"
   },
   "devDependencies": {
     "concurrently": "^5.3.0",

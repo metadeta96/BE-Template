@@ -1,7 +1,7 @@
 const { Profile, Contract, Job } = require('./model');
 
 async function reSeedDatabase() {
-    return require('../scripts/seedDb');
+    return require('../scripts/seedDb')();
 }
 
 describe('Contract model', () => {
@@ -65,6 +65,7 @@ describe('Contract model', () => {
     });
 });
 
+
 describe('Job model', () => {
     let profile;
     beforeEach(async () => {
@@ -78,7 +79,190 @@ describe('Job model', () => {
         expect(jobs.length).toEqual(1);
         for (const job of jobs) {
             expect(job).toBeTruthy();
-            expect(job.paid).not.toEqual(true);
+            expect(job.Contract).toBeTruthy();
+            expect(job.paid).toBeFalsy();
         }
+    });
+
+    it('should pay for an unpaid job', async () => {
+        const jobId = 1;
+        const result = await Job.payForJob(profile, jobId);
+
+        expect(result).toBe(true);
+
+        const job = await Job.findOne({ where: { id: jobId } });
+
+        expect(job).toBeTruthy();
+        expect(job.paid).toBe(true);
+        expect(job.paymentDate).toBeTruthy();
+    });
+
+    it('should not pay if the job is already paid', async () => {
+        const paidJob = await Job.findOne({ where: { paid: true } });
+        const result = await Job.payForJob(profile, paidJob.id);
+
+        expect(result).toBe(false);
+
+        const job = await Job.findOne({ where: { id: paidJob.id } });
+
+        expect(job).toBeTruthy();
+        expect(job.paid).toBe(true);
+        expect(job.paymentDate).toEqual(paidJob.paymentDate);
+    });
+
+    it('should not pay if the profile is falsy', async () => {
+        const jobId = 1;
+        const result = await Job.payForJob(undefined, jobId);
+
+        expect(result).toBe(false);
+
+        const job = await Job.findOne({ where: { id: jobId } });
+
+        expect(job).toBeTruthy();
+        expect(job.paid).toBeFalsy();
+        expect(job.paymentDate).toBeFalsy();
+    });
+});
+
+
+describe('Profile model - contractor payment', () => {
+    beforeEach(async () => {
+        await reSeedDatabase();
+    });
+
+    it('should transfer money from one client to a contractor', async () => {
+        const price = 200;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(clientProfile, contractorProfile, price);
+
+        expect(result).toBe(true);
+
+        expect(clientProfile.balance).toEqual(clientBalance - price);
+        expect(contractorProfile.balance).toEqual(contractorBalance + price);
+    });
+
+    it('should not transfer money if client is not an instance of Profile', async () => {
+        const price = 200;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(undefined, contractorProfile, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if contractor is not an instance of Profile', async () => {
+        const price = 200;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(clientProfile, undefined, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if amount equals zero', async () => {
+        const price = 0;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(clientProfile, contractorProfile, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if amount is less than zero', async () => {
+        const price = -200;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(clientProfile, contractorProfile, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if balance is less than the amount', async () => {
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(clientProfile, contractorProfile, clientBalance + 20);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if both profiles are the same', async () => {
+        const price = 200;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(clientProfile, clientProfile, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if client profile is not of type client', async () => {
+        const price = 2;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        clientProfile.id = contractorProfile.id;
+        const result = await Profile.payContractor(contractorProfile, contractorProfile, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if contractor profile is not of type contractor', async () => {
+        const price = 2;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        clientProfile.id = contractorProfile.id;
+        const result = await Profile.payContractor(clientProfile, clientProfile, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
     });
 });

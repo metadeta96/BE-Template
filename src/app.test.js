@@ -2,7 +2,7 @@ const request = require('supertest');
 const app = require('./app');
 
 async function reSeedDatabase() {
-    return require('../scripts/seedDb');
+    return require('../scripts/seedDb')();
 }
 
 describe('Contract endpoints', () => {
@@ -91,8 +91,35 @@ describe('Job endpoints', () => {
         expect(res.body.length).toEqual(1);
         for (const job of res.body) {
             expect(job).toBeTruthy();
-            expect(job).not.toHaveProperty('Contract');
-            expect(job.paid).not.toEqual(true);
+            expect(job.Contract).toBeTruthy();
+            expect(job.paid).toBeFalsy();
         }
+    });
+
+    it('should pay for an unpaid job given the profile', async () => {
+        const profileId = 1;
+        const jobId = 1;
+        const res = await request(app)
+            .post(`/jobs/${jobId}/pay`)
+            .set('profile_id', profileId);
+        expect(res.statusCode).toEqual(200);
+    });
+
+    it('should not pay for a job if it is not found given the profile', async () => {
+        const profileId = 1;
+        const jobId = 3;
+        const res = await request(app)
+            .post(`/jobs/${jobId}/pay`)
+            .set('profile_id', profileId);
+        expect(res.statusCode).toEqual(400);
+    });
+
+    it('should not pay for a job if it is not found given the profile', async () => {
+        const profileId = 1;
+        const jobId = 3;
+        const res = await request(app)
+            .post(`/jobs/${jobId}/pay`)
+            .set('profile_id', profileId);
+        expect(res.statusCode).toEqual(400);
     });
 });
