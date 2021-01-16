@@ -249,10 +249,19 @@ class Job extends Sequelize.Model {
     });
   }
 
+  /**
+   * Get the total to be paid in jobs given the profile
+   * If no job is found or the profile is invalid it will return 0 instead.
+   * 
+   * @static
+   * @async
+   * @param {Profile} profile the profile which owns the jobs
+   * @returns {Promise<number>} the total to be paid
+   */
   static async getTotalToBePaid(profile) {
     const contractQuery = Contract.buildQueryForProfile(profile, { status: Contract.Status.InProgress });
     if (!contractQuery) {
-      return undefined;
+      return 0;
     }
 
     return Job.sum('price', {

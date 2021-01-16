@@ -127,7 +127,26 @@ describe('Job model', () => {
         const total = await Job.getTotalToBePaid(profile);
 
         expect(total).toEqual(201);
-    })
+    });
+
+    it('should return 0 if no unjob can be found for the given profile', async () => {
+        const profile = await Profile.create({
+            firstName: 'Testerson',
+            lastName: 'Nunes',
+            profession: 'Tester',
+            balance: 0,
+            type: 'client',
+        });
+        const total = await Job.getTotalToBePaid(profile);
+
+        expect(total).toEqual(0);
+    });
+
+    it('should return 0 if the profile is falsy', async () => {
+        const total = await Job.getTotalToBePaid(undefined);
+
+        expect(total).toEqual(0);
+    });
 });
 
 
