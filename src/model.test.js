@@ -82,4 +82,144 @@ describe('Job model', () => {
             expect(job.paid).not.toEqual(true);
         }
     });
+describe('Profile model - contractor payment', () => {
+    beforeEach(async () => {
+        await reSeedDatabase();
+    });
+
+    it('should transfer money from one client to a contractor', async () => {
+        const price = 200;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(clientProfile, contractorProfile, price);
+
+        expect(result).toBe(true);
+
+        expect(clientProfile.balance).toEqual(clientBalance - price);
+        expect(contractorProfile.balance).toEqual(contractorBalance + price);
+    });
+
+    it('should not transfer money if client is not an instance of Profile', async () => {
+        const price = 200;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(undefined, contractorProfile, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if contractor is not an instance of Profile', async () => {
+        const price = 200;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(clientProfile, undefined, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if amount equals zero', async () => {
+        const price = 0;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(clientProfile, contractorProfile, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if amount is less than zero', async () => {
+        const price = -200;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(clientProfile, contractorProfile, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if balance is less than the amount', async () => {
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(clientProfile, contractorProfile, clientBalance + 20);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if both profiles are the same', async () => {
+        const price = 200;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        const result = await Profile.payContractor(clientProfile, clientProfile, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if client profile is not of type client', async () => {
+        const price = 2;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        clientProfile.id = contractorProfile.id;
+        const result = await Profile.payContractor(contractorProfile, contractorProfile, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
+
+    it('should not transfer money if contractor profile is not of type contractor', async () => {
+        const price = 2;
+        const clientProfile = await Profile.findOne({ where: { id: 1 } });
+        const contractorProfile = await Profile.findOne({ where: { id: 5 } });
+        const clientBalance = clientProfile.balance;
+        const contractorBalance = contractorProfile.balance;
+
+        clientProfile.id = contractorProfile.id;
+        const result = await Profile.payContractor(clientProfile, clientProfile, price);
+
+        expect(result).toBe(false);
+
+        expect(clientProfile.balance).toEqual(clientBalance);
+        expect(contractorProfile.balance).toEqual(contractorBalance);
+    });
 });

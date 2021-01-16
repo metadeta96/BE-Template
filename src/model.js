@@ -22,6 +22,44 @@ class Profile extends Sequelize.Model {
     Contractor: 'contractor',
   });
 
+  /**
+   * Transfer money from one client to a contractor
+   * The transfer only occurs if the client balance is enough for the amount (balance >= amount)
+   * It is also not possible to send money when both profiles are the same or it is not form a client to a contractor
+   * Do not provide zero or negative amounts. It will resolve to false.
+   * Both clientProfile and contractorProfile should be an instance of Profile
+   * If there is an error during the update the promise will be rejected
+   * 
+   * @static
+   * @async
+   * @param {Profile} clientProfile the client profile which is going to send the money
+   * @param {Profile} contractorProfile the contractor profile which will receive the money
+   * @param {number} amount the amount to be transfered
+   * @returns {Promise<boolean>} true if the transactions was possible otherwise false
+   */
+  static async payContractor(clientProfile, contractorProfile, amount) {
+    if (!clientProfile || !(clientProfile instanceof Profile)) {
+      return false;
+    } else if (!contractorProfile || !(contractorProfile instanceof Profile)) {
+      return false;
+    } else if (!amount || amount <= 0) {
+      return false;
+    } else if (clientProfile.type !== Profile.Type.Client || contractorProfile.type !== Profile.Type.Contractor) {
+      return false;
+    } else if (clientProfile.balance < amount) {
+      return false;
+    } else if (clientProfile.id === contractorProfile.id) {
+      return false;
+    }
+
+    clientProfile.balance -= amount;
+    contractorProfile.balance += amount;
+
+    await clientProfile.save();
+    await contractorProfile.save();
+
+    return true;
+  }
 }
 Profile.init(
   {
