@@ -3,7 +3,7 @@ const Sequelize = require('sequelize');
 function buildSequelize() {
   if (process.env.NODE_ENV === 'test') {
     return new Sequelize('sqlite::memory:', {
-  dialect: 'sqlite',
+      dialect: 'sqlite',
       logging: false,
     });
   }
@@ -223,6 +223,49 @@ class Job extends Sequelize.Model {
       attributes: { exclude: ['Contract'] },
       where: { paid: { [Sequelize.Op.not]: true } },
     });
+  }
+
+  /**
+   * Pay a job from the given client profile
+   * Only pay if the job has not been paid yet and the profile belongs to a client.
+   * 
+   * @static
+   * @async
+   * @param {Profile} profile the client profile which owns the job
+   * @returns {Promise<boolean>} true if the transactions was possible otherwise false
+   */
+  static async payForJob(profile, id) {
+    if (!profile) {
+      return false;
+    }
+
+    const job = await Job.findOne({
+      include: [{
+        model: Contract,
+        required: true,
+        include: [
+          {
+            model: Profile,
+            where: { id: profile.id },
+            required: true,
+            as: 'Client',
+          },
+          {
+            model: Profile,
+            required: true,
+            as: 'Contractor'
+          }
+        ],
+      }],
+      where: { id, paid: { [Sequelize.Op.not]: true } },
+    });
+
+    if (!job) {
+      return false;
+    }
+    const { Client, Contractor } = job.Contract;
+
+    return Profile.payContractor(Client, Contractor, job.price);
   }
 
 }

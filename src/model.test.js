@@ -82,6 +82,28 @@ describe('Job model', () => {
             expect(job.paid).not.toEqual(true);
         }
     });
+
+    it('should pay for an unpaid job', async () => {
+        const result = await Job.payForJob(profile, 1);
+
+        expect(result).toBe(true);
+    });
+
+    it('should not pay if the job is already paid', async () => {
+        const paidJob = await Job.findOne({ where: { paid: true } });
+        const result = await Job.payForJob(profile, paidJob.id);
+
+        expect(result).toBe(false);
+    });
+
+    it('should not pay if the profile is falsy', async () => {
+        const result = await Job.payForJob(undefined, 1);
+
+        expect(result).toBe(false);
+    });
+});
+
+
 describe('Profile model - contractor payment', () => {
     beforeEach(async () => {
         await reSeedDatabase();
