@@ -2,7 +2,7 @@ const request = require('supertest');
 const app = require('./app');
 
 async function reSeedDatabase() {
-    return require('../scripts/seedDb');
+    return require('../scripts/seedDb')();
 }
 
 describe('Contract endpoints', () => {

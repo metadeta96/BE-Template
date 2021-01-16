@@ -1,7 +1,7 @@
 const { Profile, Contract, Job } = require('./model');
 
 async function reSeedDatabase() {
-    return require('../scripts/seedDb');
+    return require('../scripts/seedDb')();
 }
 
 describe('Contract model', () => {
@@ -64,6 +64,7 @@ describe('Contract model', () => {
         }
     });
 });
+
 
 describe('Job model', () => {
     let profile;

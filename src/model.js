@@ -1,9 +1,19 @@
 const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize({
+function buildSequelize() {
+  if (process.env.NODE_ENV === 'test') {
+    return new Sequelize('sqlite::memory:', {
   dialect: 'sqlite',
-  storage: process.env.DatabaseName || './database.sqlite3'
-});
+      logging: false,
+    });
+  }
+  return new Sequelize('sqlite', {
+    dialect: 'sqlite',
+    storage: process.env.Database || './database.sqlite3',
+  });
+}
+
+const sequelize = buildSequelize();
 
 class Profile extends Sequelize.Model {
 
@@ -151,6 +161,7 @@ Contract.init(
 );
 
 class Job extends Sequelize.Model {
+
   /**
    * Find all unpaid jobs for the given profile
    * Only return jobs belonging to active contracts owned by the profile.
