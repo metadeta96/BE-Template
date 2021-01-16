@@ -95,4 +95,31 @@ describe('Job endpoints', () => {
             expect(job.paid).toBeFalsy();
         }
     });
+
+    it('should pay for an unpaid job given the profile', async () => {
+        const profileId = 1;
+        const jobId = 1;
+        const res = await request(app)
+            .post(`/jobs/${jobId}/pay`)
+            .set('profile_id', profileId);
+        expect(res.statusCode).toEqual(200);
+    });
+
+    it('should not pay for a job if it is not found given the profile', async () => {
+        const profileId = 1;
+        const jobId = 3;
+        const res = await request(app)
+            .post(`/jobs/${jobId}/pay`)
+            .set('profile_id', profileId);
+        expect(res.statusCode).toEqual(400);
+    });
+
+    it('should not pay for a job if it is not found given the profile', async () => {
+        const profileId = 1;
+        const jobId = 3;
+        const res = await request(app)
+            .post(`/jobs/${jobId}/pay`)
+            .set('profile_id', profileId);
+        expect(res.statusCode).toEqual(400);
+    });
 });

@@ -85,9 +85,16 @@ describe('Job model', () => {
     });
 
     it('should pay for an unpaid job', async () => {
-        const result = await Job.payForJob(profile, 1);
+        const jobId = 1;
+        const result = await Job.payForJob(profile, jobId);
 
         expect(result).toBe(true);
+
+        const job = await Job.findOne({ where: { id: jobId } });
+
+        expect(job).toBeTruthy();
+        expect(job.paid).toBe(true);
+        expect(job.paymentDate).toBeTruthy();
     });
 
     it('should not pay if the job is already paid', async () => {
@@ -95,12 +102,25 @@ describe('Job model', () => {
         const result = await Job.payForJob(profile, paidJob.id);
 
         expect(result).toBe(false);
+
+        const job = await Job.findOne({ where: { id: paidJob.id } });
+
+        expect(job).toBeTruthy();
+        expect(job.paid).toBe(true);
+        expect(job.paymentDate).toEqual(paidJob.paymentDate);
     });
 
     it('should not pay if the profile is falsy', async () => {
-        const result = await Job.payForJob(undefined, 1);
+        const jobId = 1;
+        const result = await Job.payForJob(undefined, jobId);
 
         expect(result).toBe(false);
+
+        const job = await Job.findOne({ where: { id: jobId } });
+
+        expect(job).toBeTruthy();
+        expect(job.paid).toBeFalsy();
+        expect(job.paymentDate).toBeFalsy();
     });
 });
 

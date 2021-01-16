@@ -264,7 +264,16 @@ class Job extends Sequelize.Model {
     }
     const { Client, Contractor } = job.Contract;
 
-    return Profile.payContractor(Client, Contractor, job.price);
+    const paymentResult = await Profile.payContractor(Client, Contractor, job.price);
+    if (!paymentResult) {
+      return false;
+    }
+
+    job.paid = true;
+    job.paymentDate = new Date();
+    await job.save();
+
+    return true;
   }
 
 }

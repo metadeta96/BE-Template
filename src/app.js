@@ -62,4 +62,24 @@ app.get('/jobs/unpaid', getProfile, async (req, res) => {
     res.json(contracts);
 });
 
+/**
+ * Get all unpaid jobs for the calling profile
+ * Only active contracts are considerated.
+ * 
+ * @name get/jobs/unpaid
+ * @returns {Array<Contract>} list of non terminated contracts for the calling profile
+ */
+app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
+    const { Job } = req.app.get('models');
+    const jobId = req.params.job_id;
+    const profile = req.profile;
+
+    const result = await Job.payForJob(profile, jobId);
+    if (!result) {
+        return res.status(400).json({ error: 'It is not possible to pay for this job' }).end();
+    }
+
+    res.sendStatus(200);
+});
+
 module.exports = app;
