@@ -291,3 +291,60 @@ describe('Profile model - contractor payment', () => {
         expect(contractorProfile.balance).toEqual(contractorBalance);
     });
 });
+
+describe('Profile model', () => {
+    beforeEach(async () => {
+        await reSeedDatabase();
+    });
+
+    it('should deposit money into a client balance', async () => {
+        const amount = 10;
+        const profile = await Profile.findOne({ where: { id: 1 } });
+        const balance = profile.balance;
+
+        const result = await Profile.depositOnClientBalance(profile, amount);
+
+        expect(result).toBe(true);
+        expect(profile.balance).toEqual(balance + amount);
+    });
+
+    it('should not deposit if it is more than 25% of the sum of the unpaid jobs price', async () => {
+        const profile = await Profile.findOne({ where: { id: 1 } });
+        const totalToBePaid = await Job.getTotalToBePaid(profile)
+        const balance = profile.balance;
+
+        const result = await Profile.depositOnClientBalance(profile, totalToBePaid * 0.30);
+
+        expect(result).toBe(false);
+        expect(profile.balance).toEqual(balance);
+    });
+
+    it('should not deposit if the amount is invalid', async () => {
+        const profile = await Profile.findOne({ where: { id: 1 } });
+        const balance = profile.balance;
+
+        let result = await Profile.depositOnClientBalance(profile, -200);
+
+        expect(result).toBe(false);
+        expect(profile.balance).toEqual(balance);
+
+        result = await Profile.depositOnClientBalance(profile, '200');
+
+        expect(result).toBe(false);
+        expect(profile.balance).toEqual(balance);
+    });
+
+    it('should not deposit if the profile is not a client', async () => {
+        const profile = await Profile.findOne({ where: { type: Profile.Type.Contractor } });
+        const balance = profile.balance;
+
+        let result = await Profile.depositOnClientBalance(profile, 200);
+
+        expect(result).toBe(false);
+        expect(profile.balance).toEqual(balance);
+
+        result = await Profile.depositOnClientBalance(undefined, 200);
+
+        expect(result).toBe(false);
+    });
+});

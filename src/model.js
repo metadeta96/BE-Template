@@ -85,6 +85,37 @@ class Profile extends Sequelize.Model {
 
     return true;
   }
+
+  /**
+   * Deposit money into the client balance.
+   * It is only possible to deposit on profiles of type client and if the amount is a positive non zero number.
+   * It is not allowed to deposit more than 25% of the sum of the unpaid jobs price.
+   * 
+   * @static
+   * @async
+   * @param {Profile} clientProfile the client profile which is going to deposit money
+   * @param {number} amount the amount to be deposited into the client balance
+   * @returns {Promise<boolean>} true if the transactions was possible otherwise false
+   */
+  static async depositOnClientBalance(clientProfile, amount) {
+    if (!this.#validateProfile(clientProfile, Profile.Type.Client)) {
+      return false;
+    } else if (!this.#validateAmount(amount)) {
+      return false;
+    }
+
+    const totalToBePaid = await Job.getTotalToBePaid(clientProfile);
+    if (totalToBePaid * 0.25 < amount) {
+      return false;
+    }
+
+    clientProfile.balance += amount;
+
+    await clientProfile.save();
+
+    return true;
+  }
+
 }
 Profile.init(
   {
