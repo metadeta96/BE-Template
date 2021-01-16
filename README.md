@@ -86,3 +86,7 @@ Below is a list of the implemented APIs for this task
 * Use Typescript for better statical analysis.
 
 * Test the performance of the raw queries in the Admin API against full sequelize implementations.
+
+* Use dotenv for controlling environment variables
+
+* Use another database instead of Sqlite3
